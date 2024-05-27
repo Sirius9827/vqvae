@@ -49,7 +49,25 @@ class VectorQuantizer(nn.Module):
         d = torch.sum(z_flattened ** 2, dim=1, keepdim=True) + \
             torch.sum(self.embedding.weight**2, dim=1) - 2 * \
             torch.matmul(z_flattened, self.embedding.weight.t())
+        """
+        VQ-VAE还维护一个Embedding层，我们也可以称为编码表，记为
+E=[e1,e2,…,eK](3)
 
+这里每个ei
+都是一个大小为d
+的向量。接着，VQ-VAE通过最邻近搜索，将z
+映射为这K
+个向量之一：
+z→ek,k=argminj∥z−ej∥2(4)
+也就是说，z
+的总大小为m×m×d
+，它依然保留着位置结构，然后每个向量都用前述方法映射为编码表中的一个，就得到一个同样大小的zq
+，然后再用它来重构。这样一来，zq
+也等价于一个m×m
+的整数矩阵，这就实现了离散型编码。
+
+Straight-through estimator 梯度设计
+        """
         # find closest encodings
         min_encoding_indices = torch.argmin(d, dim=1).unsqueeze(1)
         min_encodings = torch.zeros(
